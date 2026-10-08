@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Validates the integrated document the mediator produces. -->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+
+  <xs:simpleType name="sourceId">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="rdbms"/>
+      <xs:enumeration value="mongodb"/>
+      <xs:enumeration value="neo4j"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- A part fetched from one source: any content, but it must say where it came from -->
+  <xs:complexType name="part">
+    <xs:sequence>
+      <xs:any minOccurs="0" maxOccurs="unbounded" processContents="skip"/>
+    </xs:sequence>
+    <xs:attribute name="source" type="sourceId" use="required"/>
+    <xs:anyAttribute processContents="skip"/>
+  </xs:complexType>
+
+  <!-- A global entity = parts from several sources, joined on the shared key -->
+  <xs:complexType name="entity">
+    <xs:choice minOccurs="1" maxOccurs="unbounded">
+      <xs:element name="Profile"   type="part"/>
+      <xs:element name="Car"       type="part"/>
+      <xs:element name="Laps"      type="part"/>
+      <xs:element name="Relations" type="part"/>
+    </xs:choice>
+    <xs:attribute name="id" type="xs:string" use="required"/>
+    <xs:attribute name="matchedBy" type="xs:string" use="required"/>
+  </xs:complexType>
+
+  <xs:element name="Driver"  type="entity"/>
+  <xs:element name="Team"    type="entity"/>
+  <xs:element name="Circuit" type="entity"/>
+
+  <xs:element name="F1Integration">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Drivers"  minOccurs="0">
+          <xs:complexType><xs:sequence><xs:element ref="Driver" maxOccurs="unbounded"/></xs:sequence></xs:complexType>
+        </xs:element>
+        <xs:element name="Teams"    minOccurs="0">
+          <xs:complexType><xs:sequence><xs:element ref="Team" maxOccurs="unbounded"/></xs:sequence></xs:complexType>
+        </xs:element>
+        <xs:element name="Circuits" minOccurs="0">
+          <xs:complexType><xs:sequence><xs:element ref="Circuit" maxOccurs="unbounded"/></xs:sequence></xs:complexType>
+        </xs:element>
+        <xs:element name="Trace">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="SourceQuery" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                  <xs:simpleContent>
+                    <xs:extension base="xs:string">
+                      <xs:attribute name="source" type="sourceId" use="required"/>
+                      <xs:attribute name="step" type="xs:string" use="required"/>
+                      <xs:attribute name="rows" type="xs:integer" use="required"/>
+                      <xs:attribute name="ms" type="xs:decimal" use="required"/>
+                    </xs:extension>
+                  </xs:simpleContent>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+      <xs:attribute name="query" type="xs:string" use="required"/>
+      <xs:attribute name="generatedAt" type="xs:dateTime" use="required"/>
+      <xs:attribute name="entities" type="xs:integer" use="required"/>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

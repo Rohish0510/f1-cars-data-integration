@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  GLOBAL SCHEMA MAPPING  (Global-as-View data integration)
+
+  The user queries ONE virtual "F1Integration" schema. This file tells the
+  mediator, for every global entity, which local source supplies which part
+  and which shared key joins them. Add a source = add a <source> + a <part>;
+  the mediator code does not change.
+
+  Shared keys (identical in all three databases): driver_id, team_id, circuit_id
+  = the Jolpica/Ergast reference ids, e.g. max_verstappen, ferrari, monaco.
+-->
+<globalSchema name="F1Integration" version="2.0" dataset="Jolpica F1 dump, 1950 to present">
+
+  <sources>
+    <source id="rdbms"   type="SQLite"  native="relational rows"       query-language="SQL"
+            holds="drivers, teams, circuits, seasons, races, results, standings"/>
+    <source id="mongodb" type="MongoDB" native="BSON documents"        query-language="MQL aggregation"
+            holds="session_laps (laps + pit stops embedded per driver per session), cars"/>
+    <source id="neo4j"   type="Neo4j"   native="nodes + relationships" query-language="Cypher"
+            holds="DROVE_FOR, TEAMMATE_OF, WON_AT, POWERED_BY"/>
+  </sources>
+
+  <!-- Step 1: every source may recognise the search term (entity resolution) -->
+  <resolution limit-per-entity="6">
+    <resolver source="rdbms"   matches="driver name / code / nationality, team name, circuit name / city / country"/>
+    <resolver source="mongodb" matches="car name, power-unit model (2024 cars)"/>
+    <resolver source="neo4j"   matches="engine supplier (2024)"/>
+  </resolution>
+
+  <!-- Step 2: build each global entity from parts fetched from different sources -->
+  <entity name="Driver" key="driver_id">
+    <part element="Profile"   source="rdbms"   local="drivers + results + driver_standings (career stats via GROUP BY)"/>
+    <part element="Laps"      source="mongodb" local="session_laps aggregated by driver_id"/>
+    <part element="Relations" source="neo4j"   local="(:Driver)-[:DROVE_FOR|TEAMMATE_OF|WON_AT]-()"/>
+  </entity>
+
+  <entity name="Team" key="team_id">
+    <part element="Profile"   source="rdbms"   local="teams + results + team_standings"/>
+    <part element="Car"       source="mongodb" local="cars (latest spec)"/>
+    <part element="Laps"      source="mongodb" local="session_laps aggregated by team_id"/>
+    <part element="Relations" source="neo4j"   local="(:Team)-[:POWERED_BY]-(), WON_AT where team_id matches"/>
+  </entity>
+
+  <entity name="Circuit" key="circuit_id">
+    <part element="Profile"   source="rdbms"   local="circuits + races"/>
+    <part element="Laps"      source="mongodb" local="session_laps: fastest race lap at the circuit"/>
+    <part element="Relations" source="neo4j"   local="(:Driver)-[:WON_AT]->(:Circuit)"/>
+  </entity>
+
+</globalSchema>

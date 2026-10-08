@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>F1 Cars Integration</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <span class="flag" aria-hidden="true"></span>
+      <div>
+        <h1>F1 Cars: Integrated Query</h1>
+        <p>One query &rarr; SQLite + MongoDB + Neo4j &rarr; merged through XML · F1 1950 to present</p>
+      </div>
+    </div>
+    <ul class="health" id="health" aria-label="Data source status"></ul>
+  </header>
+
+  <main>
+    <section class="stats" id="stats" aria-label="Data volume held by each database"></section>
+
+    <form class="search" id="search-form">
+      <label for="q" class="sr-only">Search drivers, teams, circuits, cars, engines</label>
+      <input id="q" name="q" maxlength="60" autocomplete="off"
+             placeholder="Try: Hamilton, Ferrari, Monaco, Senna, MCL38, Honda, Brazilian" required>
+      <button type="submit">Run integrated query</button>
+    </form>
+    <div class="examples" id="examples"></div>
+
+    <section class="pipeline" id="pipeline" hidden aria-label="Query pipeline"></section>
+
+    <nav class="tabs" role="tablist" id="tabs" hidden>
+      <button role="tab" data-tab="view" aria-selected="true">Integrated view</button>
+      <button role="tab" data-tab="xml">XML document</button>
+      <button role="tab" data-tab="trace">Source queries</button>
+      <button role="tab" data-tab="xpath">XPath</button>
+      <button role="tab" data-tab="mapping">Mapping (global schema)</button>
+    </nav>
+
+    <section class="panel" data-panel="view" id="view"></section>
+    <section class="panel" data-panel="xml" hidden><pre class="code" id="xml"></pre></section>
+    <section class="panel" data-panel="trace" hidden id="trace"></section>
+    <section class="panel" data-panel="xpath" hidden>
+      <form class="search" id="xpath-form">
+        <label for="xp" class="sr-only">XPath expression</label>
+        <input id="xp" maxlength="300" autocomplete="off" required
+               placeholder="//Driver[Profile/world_titles &gt; 0]/Profile/full_name/text()">
+        <button type="submit">Evaluate XPath</button>
+      </form>
+      <div class="examples" id="xpath-examples"></div>
+      <pre class="code" id="xpath-out"></pre>
+    </section>
+    <section class="panel" data-panel="mapping" hidden><pre class="code" id="mapping"></pre></section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
